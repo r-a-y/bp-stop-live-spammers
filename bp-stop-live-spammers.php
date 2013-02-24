@@ -53,8 +53,6 @@ class BP_Stop_Live_Spammers {
 	 */
 	public function __construct() {
 		$this->spam_status();
-
-		add_action( 'login_form_bp-spam', array( __CLASS__, 'wp_login_error' ) );
 	}
 
 	/**
@@ -66,11 +64,6 @@ class BP_Stop_Live_Spammers {
 	 * This is important as the $bp->loggedin_user object is setup at priority 4.
 	 */
 	protected function spam_status() {
-		// if we're on the login page, stop now to prevent redirect loop
-		if ( strpos( $GLOBALS['pagenow'], 'wp-login.php' ) !== false ) {
-			return;
-		}
-
 		global $bp;
 
 		// user isn't logged in, so stop!
@@ -95,38 +88,11 @@ class BP_Stop_Live_Spammers {
 
 		// if spammer, stop this user now!
 		if ( $spammer ) {
-			// setup login args
-			$args = array(
-				// custom action used to throw an error message
-				'action' => 'bp-spam',
-
-				// reauthorize user to login
-				'reauth' => 1
-			);
-
-			// setup login URL
-			$login_url = apply_filters( 'bp_live_spammer_redirect', add_query_arg( $args, wp_login_url() ) );
-
-			// redirect user to login page
-			wp_redirect( $login_url );
-
-			// or perhaps just kill the site?
-			// cons with this approach is this doesn't clear the auth cookies
-			//wp_die( __( '<strong>ERROR</strong>: Your account has been marked as a spammer.', 'buddypress' ) );
+			// kills access to the site
+			// the spammer will not be able to view any portion of the site whatsoever
+			wp_die( __( '<strong>ERROR</strong>: Your account has been marked as a spammer.', 'buddypress' ) );
 			exit;
 		}
-	}
-
-	/**
-	 * Setup custom error message when a user is marked as a spammer live.
-	 */
-	public function wp_login_error() {
-		global $error;
-
-		$error = __( '<strong>ERROR</strong>: Your account has been marked as a spammer.', 'buddypress' );
-
-		// shake shake shake!
-		add_action( 'login_head', 'wp_shake_js', 12 );
 	}
 
 }
